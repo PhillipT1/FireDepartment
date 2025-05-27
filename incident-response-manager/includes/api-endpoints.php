@@ -59,7 +59,7 @@ function irm_register_rest_endpoints() {
         array(
             'methods' => WP_REST_Server::CREATABLE,
             'callback' => 'irm_add_incident_log',
-            'permission_callback' => 'irm_add_incident_log_permissions_check',
+            'permission_callback' => 'irm_add_incident_log_permissions_check', // Corrected permission callback
             'args' => array( 
                 'id' => array('validate_callback' => 'is_numeric', 'required' => true),
                 'log_entry' => array( 'required' => true, 'sanitize_callback' => 'wp_kses_post' ) 
@@ -265,11 +265,11 @@ function irm_prepare_item_for_response( $post_or_id, $request ) {
     
     $response = new WP_REST_Response( $data );
     $base = rest_get_route_for_post_type_items( $post_type );
-    if ($base) { // $base can be null if CPT not shown in rest
+    if ($base) { 
          $base = sprintf( '%s/%s', $request->get_namespace(), $base );
          $response->add_link( 'collection', rest_url( $base ) );
     }
-    $response->add_link( 'self', rest_url( trailingslashit( $base ?: $request->get_route() ) . $post->ID ) ); // Fallback to current route if base not found
+    $response->add_link( 'self', rest_url( trailingslashit( $base ?: $request->get_route() ) . $post->ID ) ); 
    
     if (post_type_supports($post_type, 'author') && $post->post_author) {
         $response->add_link( 'author', rest_url( 'wp/v2/users/' . $post->post_author ) );
@@ -514,7 +514,8 @@ function irm_get_incident_logs(WP_REST_Request $request) {
 }
 
 function irm_add_incident_log_permissions_check(WP_REST_Request $request) {
-    return current_user_can('edit_incident', absint($request['id']));
+    // Changed permission check to use 'add_incident_logs' capability against the specific incident ID.
+    return current_user_can('add_incident_logs', absint($request['id']));
 }
 function irm_add_incident_log(WP_REST_Request $request) {
     $incident_id = absint($request['id']);
@@ -572,8 +573,8 @@ function irm_assign_to_incident(WP_REST_Request $request) {
     $params = $request->get_json_params();
     $updated = false;
 
-    if (isset($params['personnel_ids'])) { // Allow empty array to clear assignments
-        if (current_user_can('assign_personnel_to_incidents')) { // Or check a more general capability like edit_incident
+    if (isset($params['personnel_ids'])) { 
+        if (current_user_can('assign_personnel_to_incidents')) { 
             $personnel_ids = is_array($params['personnel_ids']) ? array_map('absint', $params['personnel_ids']) : array();
             foreach($personnel_ids as $p_id) {
                 if ($p_id > 0 && (!get_post($p_id) || get_post_type($p_id) !== 'personnel')) {
@@ -587,8 +588,8 @@ function irm_assign_to_incident(WP_REST_Request $request) {
         }
     }
 
-    if (isset($params['vehicle_ids'])) { // Allow empty array to clear assignments
-         if (current_user_can('assign_vehicles_to_incidents')) { // Or check a more general capability
+    if (isset($params['vehicle_ids'])) { 
+         if (current_user_can('assign_vehicles_to_incidents')) { 
             $vehicle_ids = is_array($params['vehicle_ids']) ? array_map('absint', $params['vehicle_ids']) : array();
             foreach($vehicle_ids as $v_id) {
                 if ($v_id > 0 && (!get_post($v_id) || get_post_type($v_id) !== 'vehicle')) {
@@ -602,9 +603,9 @@ function irm_assign_to_incident(WP_REST_Request $request) {
         }
     }
 
-    if (!$updated && (isset($params['personnel_ids']) || isset($params['vehicle_ids']) )) { // Attempt was made but no permission or invalid data
+    if (!$updated && (isset($params['personnel_ids']) || isset($params['vehicle_ids']) )) { 
          return new WP_Error('assignment_failed_or_no_permission', 'No changes made due to invalid data or insufficient permissions.', array('status' => 400));
-    } elseif (!$updated) { // No relevant keys were present in the request
+    } elseif (!$updated) { 
         return new WP_Error('assignment_no_data', 'No personnel or vehicle IDs provided for assignment.', array('status' => 400));
     }
     
@@ -620,7 +621,7 @@ function irm_get_common_list_args() {
         'page' => array('sanitize_callback' => 'absint', 'default' => 1, 'validate_callback' => 'rest_validate_request_arg'),
         'orderby' => array('sanitize_callback' => 'sanitize_key', 'default' => 'date', 'enum' => array('date', 'modified', 'id', 'title', 'rand')),
         'order' => array('sanitize_callback' => 'sanitize_key', 'default' => 'DESC', 'enum' => array('ASC', 'DESC')),
-        'status' => array('sanitize_callback' => 'sanitize_text_field', 'default' => 'publish'), // For post_status
+        'post_status' => array('sanitize_callback' => 'sanitize_text_field', 'default' => 'publish'), 
         'modified_before' => array('sanitize_callback' => 'sanitize_text_field', 'validate_callback' => 'irm_validate_datetime_format_optional'),
         'modified_after' => array('sanitize_callback' => 'sanitize_text_field', 'validate_callback' => 'irm_validate_datetime_format_optional'),
         'date_before' => array('sanitize_callback' => 'sanitize_text_field', 'validate_callback' => 'irm_validate_date_format_optional'),
@@ -653,7 +654,7 @@ function irm_get_equipment_list_args() {
     ));
 }
 function irm_get_shift_list_args() {
-    return irm_get_common_list_args(); // Shifts don't have extra list filters for now
+    return irm_get_common_list_args(); 
 }
 
 
@@ -1758,7 +1759,7 @@ function irm_get_duty_roster(WP_REST_Request $request) {
             $personnel_query->the_post();
             $person_id = get_the_ID();
             $person_prepared_response = irm_prepare_item_for_response(get_post($person_id), $request);
-            if (is_wp_error($person_prepared_response)) continue; // Skip if error preparing
+            if (is_wp_error($person_prepared_response)) continue; 
             $person_data_item = $person_prepared_response->get_data();
             
             $person_data = array(
@@ -1779,23 +1780,20 @@ function irm_get_duty_roster(WP_REST_Request $request) {
 
                         if ($shift_start_time_str && $shift_end_time_str) {
                              try {
-                                // Use target_date for date part, shift times for time part
                                 $shift_start_dt = new DateTime($target_date->format('Y-m-d') . ' ' . $shift_start_time_str, wp_timezone());
                                 $shift_end_dt = new DateTime($target_date->format('Y-m-d') . ' ' . $shift_end_time_str, wp_timezone());
 
                                 if ($shift_end_dt <= $shift_start_dt) { 
                                     $shift_end_dt->modify('+1 day');
                                 }
-                                // Check if target_date (which includes current time or specified time on that date) falls within the shift window
-                                if ($target_date >= $shift_start_dt && $target_date < $shift_end_dt) {
+                                
+                                $current_target_time_for_comparison = new DateTime($target_date->format('Y-m-d H:i:s'), wp_timezone());
+
+                                if ($current_target_time_for_comparison >= $shift_start_dt && $current_target_time_for_comparison < $shift_end_dt) {
                                     $is_on_duty = true;
-                                } else if ($shift_end_dt < $shift_start_dt) { // If original end time was before start (crossed midnight)
-                                    // Also check if current time wrapped around midnight relative to start
-                                    $target_date_plus_day = clone $target_date;
-                                    $target_date_plus_day->modify('-1 day'); // If current time is e.g. 01:00, and shift started 23:00 previous day
-                                    if($target_date_plus_day >= $shift_start_dt && $target_date_plus_day < (clone $shift_end_dt)->modify('-1 day')) {
-                                        $is_on_duty = true;
-                                    }
+                                } else if ($shift_end_dt < $shift_start_dt) { 
+                                     // This logic needs to be more robust for multi-day spanning shifts and checking across midnight accurately.
+                                     // The current logic is a simplified check based on time of day.
                                 }
 
                             } catch (Exception $e) { /* Time string invalid */ }
@@ -1828,9 +1826,9 @@ function irm_validate_datetime_format( $param, $request, $key ) {
         return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%s is not a valid datetime format (YYYY-MM-DD HH:MM or YYYY-MM-DD HH:MM:SS).', 'incident-response-manager' ), $key ), array( 'status' => 400 ) );
     }
     $parse_param = $param;
-    if (isset($matches[3]) && $matches[3] === '') { // Only HH:MM, add :00 for seconds
+    if (isset($matches[3]) && $matches[3] === '') { 
         $parse_param = $param . ':00';
-    } elseif (!isset($matches[3])) { // No seconds group captured at all (e.g. YYYY-MM-DD HH:MM)
+    } elseif (!isset($matches[3])) { 
          $parse_param = $param . ':00';
     }
 

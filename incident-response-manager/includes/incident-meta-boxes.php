@@ -206,7 +206,8 @@ function irm_handle_add_incident_log_entry() {
         return;
     }
 
-    if ( ! current_user_can( 'edit_post', $post_id ) ) {
+    // Changed permission check to use 'add_incident_logs' capability
+    if ( ! current_user_can( 'add_incident_logs', $post_id ) ) { 
         wp_send_json_error( __( 'You do not have permission to add logs to this incident.', 'incident-response-manager' ) );
         return;
     }

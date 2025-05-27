@@ -39,6 +39,7 @@ function irm_add_roles_and_capabilities() {
     // For now, 'edit_published_posts' is a base.
     // The actual check `current_user_can('edit_comment', $comment_id)` or `current_user_can('edit_post', $post_id_of_comment)` is key.
     $firefighter_caps['edit_comment'] = true; // General capability to edit their own comments.
+    $firefighter_caps['add_incident_logs'] = true; // New capability
 
     add_role( 'firefighter', 'Firefighter', $firefighter_caps );
 
@@ -68,12 +69,14 @@ function irm_add_roles_and_capabilities() {
     // If 'personnel' was a CPT they could edit, we'd add:
     // $captain_caps['edit_personnels'] = true;
     // $captain_caps['edit_others_personnels'] = true; // If they can edit others
+    $captain_caps['add_incident_logs'] = true; // New capability
 
     add_role( 'captain', 'Captain', $captain_caps );
 
     // --- Chief Role ---
     // All Captain capabilities + manage all personnel, vehicles, equipment, reports, settings.
     $chief_caps = $captain_caps;
+    $chief_caps['add_incident_logs'] = true; // New capability
 
     // Full CPT Management (Incidents, Personnel, Vehicles, Equipment)
     foreach ($cpts as $cpt) {
@@ -132,6 +135,7 @@ function irm_add_roles_and_capabilities() {
         }
         // Add any caps that might not be in chief_caps but admin should have
         $admin_role->add_cap('manage_options'); // Standard admin cap
+        $admin_role->add_cap('add_incident_logs'); // Explicitly add to admin
     }
 }
 
@@ -230,6 +234,9 @@ function irm_map_meta_capabilities( $caps, $cap, $user_id, $args ) {
     // Or, if we want them to comment on *any* incident they are assigned to (even if not post author),
     // they need `edit_others_incidents` or a more specific check.
     // For now, the `edit_published_posts` and the AJAX check logic will handle this.
+    // If 'add_incident_logs' is checked against a post ID (e.g., current_user_can('add_incident_logs', $incident_id)),
+    // and it's a meta cap, it needs mapping. If it's a primitive cap checked directly, no mapping here is needed for it.
+    // Assuming 'add_incident_logs' will be checked directly as a primitive capability for now.
 
     return $caps; // Return original $caps if no mapping occurred
 }

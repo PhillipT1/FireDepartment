@@ -58,4 +58,42 @@ function irm_admin_enqueue_scripts( $hook_suffix ) {
 }
 add_action( 'admin_enqueue_scripts', 'irm_admin_enqueue_scripts' );
 
+/**
+ * =============================================================================
+ * Deployment Notes
+ * =============================================================================
+ * 
+ * To prepare the plugin for deployment (e.g., for WordPress.org or direct installation):
+ * 
+ * 1. Create a ZIP file of the `incident-response-manager` directory.
+ *    Ensure the main plugin file (`incident-response-manager.php`) and the `readme.txt` 
+ *    are at the root of the ZIP file when the `incident-response-manager` folder itself is zipped.
+ *    For example, if the plugin folder is `incident-response-manager`, you would zip this folder.
+ *    The structure inside the zip should be:
+ *    incident-response-manager/incident-response-manager.php
+ *    incident-response-manager/readme.txt
+ *    incident-response-manager/includes/...
+ *    incident-response-manager/assets/...
+ *    etc.
+ * 
+ * 2. Exclude development files and directories from the production ZIP:
+ *    - The `/tests` directory (if PHPUnit tests were fully set up and run locally).
+ *    - `todo.md`
+ *    - `INTEGRATIONS.MD` (can be kept if desired for users, but often dev-focused docs are separate)
+ *    - `API_DOCUMENTATION.md` (can be kept if desired for users, but often dev-focused docs are separate)
+ *    - Any local configuration files (e.g., `.phpunit.xml.dist` if it were used).
+ *    - Source control directories like `.git`.
+ *    - Build tool configurations (e.g., `composer.json`, `package.json`, `Gruntfile.js` if they were used).
+ * 
+ * 3. Ensure all text domains are correctly loaded for internationalization.
+ *    The text domain 'incident-response-manager' should be used consistently.
+ * 
+ * 4. Review the `readme.txt` file for accuracy, especially the "Tested up to" WordPress version
+ *    and the "Stable tag".
+ * 
+ * 5. Consider using build tools (like Gulp, Grunt, or npm scripts with wp-cli) to automate
+ *    the build and packaging process, which can handle file exclusion, version bumping, etc.
+ * 
+ */
+
 ?>

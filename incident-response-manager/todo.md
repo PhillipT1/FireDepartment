@@ -46,7 +46,7 @@
 
 ## Testing & Refinement
 - [X] Conduct comprehensive testing (PHPUnit for helpers, manual functional, API testing).
-- [ ] **BUG**: Firefighters cannot add incident logs due to current capability checks (`edit_incident` or `edit_post` on the incident CPT, which they don't have).
+- [X] **BUG FIXED**: Firefighters cannot add incident logs due to current capability checks (`edit_incident` or `edit_post` on the incident CPT, which they don't have).
     *   **Resolution Idea**: Create `add_incident_logs` capability. Grant to relevant roles. Update permission checks in AJAX handler and REST API for adding logs.
 - [X] Review and update all documentation.
 
